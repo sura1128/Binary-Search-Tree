@@ -1,9 +1,7 @@
 
 // Copy paste this Java Template and save it as "BabyNames.java"
 import java.util.*;
-import java.util.Map.Entry;
 import java.io.*;
-
 // write your matric number here: A0102800A
 // write your name here: Suranjana Sengupta
 // write list of collaborators here: 
@@ -15,70 +13,55 @@ class BabyNames {
 
 	// --------------------------------------------
 
-	private TreeMap<String, Integer> babyMap;
-	private TreeSet<String> babySet;
+	private TreeSet<String> babyGirls;
+	private TreeSet<String> babyBoys;
 
 	// --------------------------------------------
 
 	public BabyNames() {
 
-		babyMap = new TreeMap<String, Integer>();
-		babySet = new TreeSet<String>();
+		babyGirls = new TreeSet<String>();
+		babyBoys = new TreeSet<String>();
 
 		// --------------------------------------------
 	}
 
 	void AddSuggestion(String babyName, int genderSuitability) {
 
-		babyMap.put(babyName, genderSuitability);
-		babySet.add(babyName);
+		if (genderSuitability == 1) {
+			babyBoys.add(babyName);
+		} else if (genderSuitability == 2) {
+			babyGirls.add(babyName);
+		}
 
 		// --------------------------------------------
 	}
 
 	void RemoveSuggestion(String babyName) {
-		babyMap.remove(babyName);
-		babySet.remove(babyName);
+
+		if (babyBoys.contains(babyName)) {
+			babyBoys.remove(babyName);
+		} else if (babyGirls.contains(babyName)) {
+			babyGirls.remove(babyName);
+		}
+
 	}
 
 	int Query(String START, String END, int genderPreference) {
 		int ans = 0;
 
-		NavigableSet<String> babies = babySet.subSet(START, true, END, false);
+		NavigableSet<String> boyNames = babyBoys.subSet(START, true, END, false);
+		NavigableSet<String> girlNames = babyGirls.subSet(START, true, END, false);
 
-		Iterator<String> itr = babies.iterator();
-
-		if (!babies.isEmpty()) {
-			if (genderPreference == 0) {
-				ans = babies.size();
-			} else {
-				while (itr.hasNext()) {
-					String temp = itr.next();
-					if (babyMap.containsKey(temp) && (babyMap.get(temp) == genderPreference)) {
-						ans++;
-					}
-				}
-			}
+		if (genderPreference == 0) {
+			ans = boyNames.size() + girlNames.size();
+		} else if (genderPreference == 1) {
+			ans = boyNames.size();
+		} else if (genderPreference == 2) {
+			ans = girlNames.size();
 		}
 
 		return ans;
-	}
-
-	boolean babyInRange(String START, String END, String babyName) {
-		String babyStart = babyName.substring(0, START.length());
-		String babyEnd = babyName.substring(0, END.length());
-
-		if (babyStart.compareToIgnoreCase(babyStart) >= 0 && babyStart.compareToIgnoreCase(babyEnd) < 0) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	void print(NavigableMap<String, Integer> map) {
-		for (Map.Entry<String, Integer> entry : map.entrySet()) {
-			System.out.println(entry.getKey());
-		}
 	}
 
 	void run() throws Exception {
