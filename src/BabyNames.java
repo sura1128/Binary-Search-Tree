@@ -15,45 +15,70 @@ class BabyNames {
 
 	// --------------------------------------------
 
-	private TreeMap<String, Integer> babyNames;
+	private TreeMap<String, Integer> babyMap;
+	private TreeSet<String> babySet;
 
 	// --------------------------------------------
 
 	public BabyNames() {
 
-		babyNames = new TreeMap<String, Integer>();
+		babyMap = new TreeMap<String, Integer>();
+		babySet = new TreeSet<String>();
 
 		// --------------------------------------------
 	}
 
 	void AddSuggestion(String babyName, int genderSuitability) {
 
-		babyNames.put(babyName, genderSuitability);
+		babyMap.put(babyName, genderSuitability);
+		babySet.add(babyName);
 
 		// --------------------------------------------
 	}
 
 	void RemoveSuggestion(String babyName) {
-		babyNames.remove(babyName);
+		babyMap.remove(babyName);
+		babySet.remove(babyName);
 	}
 
 	int Query(String START, String END, int genderPreference) {
 		int ans = 0;
 
-		NavigableMap<String, Integer> searchedBabies = babyNames.subMap(START, true, END, false);
+		NavigableSet<String> babies = babySet.subSet(START, true, END, false);
 
-		if (genderPreference == 0) {
-			ans = searchedBabies.size();
-		} else {
-			for (Entry<String, Integer> entry : searchedBabies.entrySet()) {
-				if (entry.getValue() == genderPreference) {
-					ans++;
+		Iterator<String> itr = babies.iterator();
+
+		if (!babies.isEmpty()) {
+			if (genderPreference == 0) {
+				ans = babies.size();
+			} else {
+				while (itr.hasNext()) {
+					String temp = itr.next();
+					if (babyMap.containsKey(temp) && (babyMap.get(temp) == genderPreference)) {
+						ans++;
+					}
 				}
 			}
-
 		}
 
 		return ans;
+	}
+
+	boolean babyInRange(String START, String END, String babyName) {
+		String babyStart = babyName.substring(0, START.length());
+		String babyEnd = babyName.substring(0, END.length());
+
+		if (babyStart.compareToIgnoreCase(babyStart) >= 0 && babyStart.compareToIgnoreCase(babyEnd) < 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	void print(NavigableMap<String, Integer> map) {
+		for (Map.Entry<String, Integer> entry : map.entrySet()) {
+			System.out.println(entry.getKey());
+		}
 	}
 
 	void run() throws Exception {
