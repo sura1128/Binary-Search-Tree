@@ -12,10 +12,12 @@ import java.util.NoSuchElementException;
 class BabyNames {
 	private BST TGirl;
 	private BST TBoy;
+	private Map<String, Integer> babyMap;
 
 	public BabyNames() {
 		TBoy = new BST();
 		TGirl = new BST();
+		babyMap = new HashMap<String, Integer>();
 	}
 
 	void AddSuggestion(String babyName, int genderSuitability) {
@@ -25,10 +27,17 @@ class BabyNames {
 		} else if (genderSuitability == 2) {
 			TGirl.insert(babyName);
 		}
+		babyMap.put(babyName, genderSuitability);
 	}
 
 	void RemoveSuggestion(String babyName) {
-
+		if (babyMap.containsKey(babyName)) {
+			if (babyMap.get(babyName) == 1) {
+				TBoy.delete(babyName);
+			} else if (babyMap.get(babyName) == 2) {
+				TGirl.delete(babyName);
+			}
+		}
 	}
 
 	int Query(String START, String END, int genderPreference) {
@@ -103,12 +112,12 @@ class BSTVertex {
 class BST {
 	protected BSTVertex root;
 
-	protected BSTVertex search(BSTVertex T, int v) {
+	protected BSTVertex search(BSTVertex T, String v) {
 		if (T == null)
 			return T; // not found
-		else if (T.key == v)
+		else if (T.name.compareTo(v) == 0)
 			return T; // found
-		else if (T.key < v)
+		else if (T.name.compareTo(v) < 0)
 			return search(T.right, v); // search to the right
 		else
 			return search(T.left, v); // search to the left
@@ -242,25 +251,25 @@ class BST {
 	 * return findMin(T.left); // go to the left }
 	 */
 
-	protected int findMin(BSTVertex T) {
+	protected String findMin(BSTVertex T) {
 		if (T == null)
 			throw new NoSuchElementException("BST is empty, no minimum");
 		else if (T.left == null)
-			return T.key; // this is the min
+			return T.name; // this is the min
 		else
 			return findMin(T.left); // go to the left
 	}
 
-	protected int findMax(BSTVertex T) {
+	protected String findMax(BSTVertex T) {
 		if (T == null)
 			throw new NoSuchElementException("BST is empty, no maximum");
 		else if (T.right == null)
-			return T.key; // this is the max
+			return T.name; // this is the max
 		else
 			return findMax(T.right); // go to the right
 	}
 
-	protected int successor(BSTVertex T) {
+	protected String successor(BSTVertex T) {
 		if (T.right != null) // this subtree has right subtree
 			return findMin(T.right); // the successor is the minimum of right
 										// subtree
@@ -272,11 +281,11 @@ class BST {
 				cur = par; // continue moving up
 				par = cur.parent;
 			}
-			return par == null ? -1 : par.key; // this is the successor of T
+			return par == null ? null : par.name; // this is the successor of T
 		}
 	}
 
-	protected int predecessor(BSTVertex T) {
+	protected String predecessor(BSTVertex T) {
 		if (T.left != null) // this subtree has left subtree
 			return findMax(T.left); // the predecessor is the maximum of left
 									// subtree
@@ -288,15 +297,15 @@ class BST {
 				cur = par; // continue moving up
 				par = cur.parent;
 			}
-			return par == null ? -1 : par.key; // this is the successor of T
+			return par == null ? null : par.name; // this is the successor of T
 		}
 	}
 
-	protected BSTVertex delete(BSTVertex T, int v) {
+	protected BSTVertex delete(BSTVertex T, String v) {
 		if (T == null)
 			return T; // cannot find the item to be deleted
 
-		if (T.key == v) { // this is the node to be deleted
+		if (T.name.compareTo(v) == 0) { // this is the node to be deleted
 			if (T.left == null && T.right == null) // this is a leaf
 				T = null; // simply erase this node
 			else if (T.left == null && T.right != null) { // only one child at
@@ -312,15 +321,37 @@ class BST {
 				T = T.left; // bypass T
 				temp = null;
 			} else { // has two children, find successor
-				int successorV = successor(v);
-				T.key = successorV; // replace this key with the successor's key
+				String successorV = successor(v);
+				T.name = successorV; // replace this key with the successor's
+										// key
 				T.right = delete(T.right, successorV); // delete the old
 														// successorV
 			}
-		} else if (T.key < v) // search to the right
+		} else if (T.name.compareTo(v) < 0) // search to the right
 			T.right = delete(T.right, v);
 		else // search to the left
 			T.left = delete(T.left, v);
+
+		if (T != null) {
+			if (checkBalance(getHeight(T.left), getHeight(T.right)) == -2) {
+				if (v.compareTo(T.right.name) > 0) {
+					T = rotateLeft(T);
+				} else {
+					T.right = rotateRight(T.right);
+					T = rotateLeft(T);
+				}
+			} else if (checkBalance(getHeight(T.left), getHeight(T.right)) == 2) {
+				if (v.compareTo(T.left.name) < 0) {
+					T = rotateRight(T);
+				} else {
+					T.left = rotateLeft(T.left);
+					T = rotateRight(T);
+				}
+			}
+			T.height = findMax(getHeight(T.left), getHeight(T.right)) + 1;
+			T.size = 1 + getSize(T.left) + getSize(T.right);
+		}
+
 		return T; // return the updated BST
 	}
 
@@ -328,9 +359,9 @@ class BST {
 		root = null;
 	}
 
-	public int search(int v) {
+	public String search(String v) {
 		BSTVertex res = search(root, v);
-		return res == null ? -1 : res.key;
+		return res == null ? null : res.name;
 	}
 
 	public void insert(String v) {
@@ -342,25 +373,29 @@ class BST {
 		System.out.println();
 	}
 
-	public int findMin() {
+	public String findMin() {
 		return findMin(root);
 	}
 
-	public int findMax() {
+	public String findMax() {
 		return findMax(root);
 	}
 
-	public int successor(int v) {
+	public String successor(String v) {
 		BSTVertex vPos = search(root, v);
-		return vPos == null ? -1 : successor(vPos);
+		if (vPos == null) {
+			return null;
+		} else {
+			return successor(vPos);
+		}
 	}
 
-	public int predecessor(int v) {
+	public String predecessor(String v) {
 		BSTVertex vPos = search(root, v);
-		return vPos == null ? -1 : predecessor(vPos);
+		return vPos == null ? null : predecessor(vPos);
 	}
 
-	public void delete(int v) {
+	public void delete(String v) {
 		root = delete(root, v);
 	}
 
