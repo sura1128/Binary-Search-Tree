@@ -2,63 +2,49 @@
 // Copy paste this Java Template and save it as "BabyNames.java"
 import java.util.*;
 import java.io.*;
+import java.util.NoSuchElementException;
+
 // write your matric number here: A0102800A
 // write your name here: Suranjana Sengupta
-// write list of collaborators here: 
+// write list of collaborators here: Akshat Dubey
 // year 2015 hash code: JESg5svjYpIsmHmIjabX (do NOT delete this line)
 
 class BabyNames {
-	// if needed, declare a private data structure here that
-	// is accessible to all methods in this class
-
-	// --------------------------------------------
-
-	private TreeSet<String> babyGirls;
-	private TreeSet<String> babyBoys;
-
-	// --------------------------------------------
+	private BST TGirl;
+	private BST TBoy;
 
 	public BabyNames() {
-
-		babyGirls = new TreeSet<String>();
-		babyBoys = new TreeSet<String>();
-
-		// --------------------------------------------
+		TBoy = new BST();
+		TGirl = new BST();
 	}
 
 	void AddSuggestion(String babyName, int genderSuitability) {
 
 		if (genderSuitability == 1) {
-			babyBoys.add(babyName);
+			TBoy.insert(babyName);
 		} else if (genderSuitability == 2) {
-			babyGirls.add(babyName);
+			TGirl.insert(babyName);
 		}
-
-		// --------------------------------------------
 	}
 
 	void RemoveSuggestion(String babyName) {
-
-		if (babyBoys.contains(babyName)) {
-			babyBoys.remove(babyName);
-		} else if (babyGirls.contains(babyName)) {
-			babyGirls.remove(babyName);
-		}
 
 	}
 
 	int Query(String START, String END, int genderPreference) {
 		int ans = 0;
 
-		NavigableSet<String> boyNames = babyBoys.subSet(START, true, END, false);
-		NavigableSet<String> girlNames = babyGirls.subSet(START, true, END, false);
+		int boyCtr = 0, girlCtr = 0;
 
-		if (genderPreference == 0) {
-			ans = boyNames.size() + girlNames.size();
-		} else if (genderPreference == 1) {
-			ans = boyNames.size();
+		boyCtr = TBoy.findNamesInRange(START, END);
+		girlCtr = TGirl.findNamesInRange(START, END);
+
+		if (genderPreference == 1) {
+			ans = boyCtr;
 		} else if (genderPreference == 2) {
-			ans = girlNames.size();
+			ans = girlCtr;
+		} else if (genderPreference == 0) {
+			ans = boyCtr + girlCtr;
 		}
 
 		return ans;
@@ -92,4 +78,302 @@ class BabyNames {
 		BabyNames ps2 = new BabyNames();
 		ps2.run();
 	}
+}
+
+// Every vertex in this BST is a Java Class
+class BSTVertex {
+
+	BSTVertex(String name) {
+		parent = left = right = null;
+		height = 0;
+		size = 1;
+		this.name = name;
+	}
+
+	// all these attributes remain public to slightly simplify the code
+	public BSTVertex parent, left, right;
+	public int key;
+	public int height; // will be used in AVL lecture
+	public String name;
+	public int size;
+}
+
+// This is just a sample implementation
+// There are other ways to implement BST concepts...
+class BST {
+	protected BSTVertex root;
+
+	protected BSTVertex search(BSTVertex T, int v) {
+		if (T == null)
+			return T; // not found
+		else if (T.key == v)
+			return T; // found
+		else if (T.key < v)
+			return search(T.right, v); // search to the right
+		else
+			return search(T.left, v); // search to the left
+	}
+
+	protected BSTVertex insert(BSTVertex T, String v) {
+		if (T == null) {
+			BSTVertex node = new BSTVertex(v);
+			return node; // insertion point is found
+		}
+
+		if (v.compareTo(T.name) > 0) { // search to the right
+			T.right = insert(T.right, v);
+			T.right.parent = T;
+			if (checkBalance(getHeight(T.left), getHeight(T.right)) == -2) {
+				if (v.compareTo(T.right.name) > 0) {
+					T = rotateLeft(T);
+				} else {
+					T.right = rotateRight(T.right);
+					T = rotateLeft(T);
+				}
+			}
+
+		} else { // search to the left
+			T.left = insert(T.left, v);
+			T.left.parent = T;
+			if (checkBalance(getHeight(T.left), getHeight(T.right)) == 2) {
+				if (v.compareTo(T.left.name) < 0) {
+					T = rotateRight(T);
+				} else {
+					T.left = rotateLeft(T.left);
+					T = rotateRight(T);
+				}
+			}
+		}
+
+		T.height = findMax(getHeight(T.left), getHeight(T.right)) + 1;
+		T.size = 1 + getSize(T.left) + getSize(T.right);
+
+		return T; // return the updated BST
+	}
+
+	private int findMax(int lHeight, int rHeight) {
+		return Math.max(lHeight, rHeight);
+	}
+
+	private int checkBalance(int leftHeight, int rightHeight) {
+		return (leftHeight - rightHeight);
+	}
+
+	private BSTVertex rotateRight(BSTVertex t2) {
+		BSTVertex t1 = t2.left;
+		if (t2.parent != null) {
+			t1.parent = t2.parent;
+		}
+		t2.parent = t1;
+		t2.left = t1.right;
+		if (t1.right != null) {
+			t1.right.parent = t2;
+		}
+		t1.right = t2;
+
+		t1.height = findMax(getHeight(t1.left), getHeight(t1.right)) + 1;
+		t2.height = findMax(getHeight(t2.left), getHeight(t2.right)) + 1;
+
+		t1.size = 1 + getSize(t1.left) + getSize(t1.right);
+		t2.size = 1 + getSize(t2.left) + getSize(t2.right);
+		return t1;
+	}
+
+	private BSTVertex rotateLeft(BSTVertex t1) {
+		BSTVertex t2 = t1.right;
+		if (t1.parent != null) {
+			t2.parent = t1.parent;
+		}
+		t1.parent = t2;
+		t1.right = t2.left;
+		if (t2.left != null) {
+			t2.left.parent = t1;
+		}
+		t2.left = t1;
+
+		t1.height = findMax(getHeight(t1.left), getHeight(t1.right)) + 1;
+		t2.height = findMax(getHeight(t2.left), getHeight(t2.right)) + 1;
+
+		t1.size = 1 + getSize(t1.left) + getSize(t1.right);
+		t2.size = 1 + getSize(t2.left) + getSize(t2.right);
+		return t2;
+	}
+
+	protected int rank(String KEY, BSTVertex T) {
+		if (T == null) {
+			return 0;
+		}
+		int cmp = KEY.compareTo(T.name);
+		if (cmp < 0) { // less than T
+			return rank(KEY, T.left);
+		} else if (cmp > 0) { // greater than T
+			return (1 + getSize(T.left) + rank(KEY, T.right));
+		} else { // equal to T
+			return getSize(T.left);
+		}
+	}
+
+	public int findNamesInRange(String START, String END) {
+		int startRank = rank(START, root);
+		int endRank = rank(END, root);
+		return (endRank - startRank);
+	}
+
+	protected void inorder(BSTVertex T) {
+		if (T == null)
+			return;
+		inorder(T.left); // recursively go to the left
+		System.out.printf(" %d", T.key); // visit this BST node
+		inorder(T.right); // recursively go to the right
+	}
+
+	public int getSize(BSTVertex T) {
+		if (T == null) {
+			return 0;
+		}
+		return T.size;
+	}
+
+	// Example of Java error handling mechanism
+	/*
+	 * // old code, returns -1 when there is no minimum (the BST is empty)
+	 * protected int findMin(BSTVertex T) { if (T == null) return -1; // not
+	 * found else if (T.left == null) return T.key; // this is the min else
+	 * return findMin(T.left); // go to the left }
+	 */
+
+	protected int findMin(BSTVertex T) {
+		if (T == null)
+			throw new NoSuchElementException("BST is empty, no minimum");
+		else if (T.left == null)
+			return T.key; // this is the min
+		else
+			return findMin(T.left); // go to the left
+	}
+
+	protected int findMax(BSTVertex T) {
+		if (T == null)
+			throw new NoSuchElementException("BST is empty, no maximum");
+		else if (T.right == null)
+			return T.key; // this is the max
+		else
+			return findMax(T.right); // go to the right
+	}
+
+	protected int successor(BSTVertex T) {
+		if (T.right != null) // this subtree has right subtree
+			return findMin(T.right); // the successor is the minimum of right
+										// subtree
+		else {
+			BSTVertex par = T.parent;
+			BSTVertex cur = T;
+			// if par(ent) is not root and cur(rent) is its right children
+			while ((par != null) && (cur == par.right)) {
+				cur = par; // continue moving up
+				par = cur.parent;
+			}
+			return par == null ? -1 : par.key; // this is the successor of T
+		}
+	}
+
+	protected int predecessor(BSTVertex T) {
+		if (T.left != null) // this subtree has left subtree
+			return findMax(T.left); // the predecessor is the maximum of left
+									// subtree
+		else {
+			BSTVertex par = T.parent;
+			BSTVertex cur = T;
+			// if par(ent) is not root and cur(rent) is its left children
+			while ((par != null) && (cur == par.left)) {
+				cur = par; // continue moving up
+				par = cur.parent;
+			}
+			return par == null ? -1 : par.key; // this is the successor of T
+		}
+	}
+
+	protected BSTVertex delete(BSTVertex T, int v) {
+		if (T == null)
+			return T; // cannot find the item to be deleted
+
+		if (T.key == v) { // this is the node to be deleted
+			if (T.left == null && T.right == null) // this is a leaf
+				T = null; // simply erase this node
+			else if (T.left == null && T.right != null) { // only one child at
+															// right
+				BSTVertex temp = T;
+				T.right.parent = T.parent;
+				T = T.right; // bypass T
+				temp = null;
+			} else if (T.left != null && T.right == null) { // only one child at
+															// left
+				BSTVertex temp = T;
+				T.left.parent = T.parent;
+				T = T.left; // bypass T
+				temp = null;
+			} else { // has two children, find successor
+				int successorV = successor(v);
+				T.key = successorV; // replace this key with the successor's key
+				T.right = delete(T.right, successorV); // delete the old
+														// successorV
+			}
+		} else if (T.key < v) // search to the right
+			T.right = delete(T.right, v);
+		else // search to the left
+			T.left = delete(T.left, v);
+		return T; // return the updated BST
+	}
+
+	public BST() {
+		root = null;
+	}
+
+	public int search(int v) {
+		BSTVertex res = search(root, v);
+		return res == null ? -1 : res.key;
+	}
+
+	public void insert(String v) {
+		root = insert(root, v);
+	}
+
+	public void inorder() {
+		inorder(root);
+		System.out.println();
+	}
+
+	public int findMin() {
+		return findMin(root);
+	}
+
+	public int findMax() {
+		return findMax(root);
+	}
+
+	public int successor(int v) {
+		BSTVertex vPos = search(root, v);
+		return vPos == null ? -1 : successor(vPos);
+	}
+
+	public int predecessor(int v) {
+		BSTVertex vPos = search(root, v);
+		return vPos == null ? -1 : predecessor(vPos);
+	}
+
+	public void delete(int v) {
+		root = delete(root, v);
+	}
+
+	// will be used in AVL lecture
+	protected int getHeight(BSTVertex T) {
+		if (T == null)
+			return -1;
+		else
+			return T.height;
+	}
+
+	public int getHeight() {
+		return getHeight(root);
+	}
+
 }
